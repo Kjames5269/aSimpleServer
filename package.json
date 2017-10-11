@@ -1,0 +1,22 @@
+{
+  "name": "a-simple-sever",
+  "version": "0.1.0",
+  "description": "A simple server to respond to http request and talk to a database",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kjames5269/aSimpleServer.git"
+  },
+  "author": "Kyle Grady",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Kjames5269/aSimpleServer/issues"
+  },
+  "homepage": "https://github.com/Kjames5269/aSimpleServer#readme",
+  "dependencies": {
+    "mongo": "^0.1.0"
+  }
+}
