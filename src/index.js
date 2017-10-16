@@ -26,11 +26,31 @@ function getManga(manga) {
   });
 }
 
-app.listen(8080);
+app.listen(8080, () => {
+  console.log("Listening now on port 8080!");
+});
 
 app.get('/', (request, response) => {
   response.send("Some text for now");
-})
+});
+
+app.get('/mangaList', (request, response) => {
+  var list = DB.getList().then((doc) => {
+    var promises = [];
+    doc.forEach((e) => {
+      promises.push(getManga(e));
+    });
+    Promise.all(promises).then((manga) => {
+      body = manga;
+      response.statusCode = 200;
+      response.setHeader('Content-Type', 'application/json');
+
+      const responseBody = { headers, method, url, body };
+
+      response.send(JSON.stringify(responseBody));
+    });
+  });
+});
 /*Ihttp.createServer((request, response) => {
   const { headers, method, url } = request;
   var body = [];
