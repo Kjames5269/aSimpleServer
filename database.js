@@ -21,5 +21,26 @@ function base(queryFunc) {
 }
 
 export function getList() {
-  return base((col) => col.findOne);
+  return base((col) => col.find().toArray());
+}
+
+export function get
+
+export function insertInto(name, id, ch) {
+  return base((col) => {
+    return col.insertOne({
+      "name": name,
+      "_id": id,
+      "ch": ch,
+    });
+  });
+}
+
+export function updateCh(id) {
+  return base((col) => {
+    return col.findOneAndUpdate(
+      { "_id": id },
+      {"$inc": {"ch" : 1}}
+      );
+  });
 }

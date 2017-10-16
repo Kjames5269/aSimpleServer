@@ -1,11 +1,13 @@
 const http = require('http');
 const DB = require('./database.js');
 const Promise = require('bluebird');
+const express = require('express');
+var app = express();
 
 function getManga(manga) {
   return new Promise((resolve, reject) => {
     var request = new XMLHttpRequest();
-    request.open('GET', 'http://www.mangaeden.com/api/manga/' + manga.id, true);
+    request.open('GET', 'http://www.mangaeden.com/api/manga/' + manga._id, true);
     request.onreadystatechange = function(){
     if (request.readyState === 4 && request.status === 200){
       var response = JSON.parse(request.response)
@@ -24,7 +26,12 @@ function getManga(manga) {
   });
 }
 
-http.createServer((request, response) => {
+app.listen(8080);
+
+app.get('/', (request, response) => {
+  response.send("Some text for now");
+})
+/*Ihttp.createServer((request, response) => {
   const { headers, method, url } = request;
   var body = [];
 
@@ -36,7 +43,7 @@ http.createServer((request, response) => {
       var list = DB.getList().then((doc) => {
         var promises = [];
         doc.forEach((e) => {
-          promises.push(getManga());
+          promises.push(getManga(e));
         });
         Promise.all(promises).then((manga) => {
           body = manga;
@@ -50,6 +57,9 @@ http.createServer((request, response) => {
       });
     });
   }
+  else if( method === 'GET' && url === '/next') {
+
+  }
   else if ( method === 'POST' && url === '/mangaList') {
 
   }
@@ -57,4 +67,4 @@ http.createServer((request, response) => {
     response.statusCode = 404;
     response.end();
   }
-}).listen(8080);
+}).listen(8080); */
