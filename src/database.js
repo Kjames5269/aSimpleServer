@@ -24,7 +24,7 @@ export function getList() {
   return base((col) => col.find().toArray());
 }
 
-export function get
+//export function get
 
 export function insertInto(name, id, ch) {
   return base((col) => {
