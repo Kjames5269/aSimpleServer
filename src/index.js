@@ -6,6 +6,7 @@ var app = express();
 
 function getManga(manga) {
   return new Promise((resolve, reject) => {
+    console.log("Making a getManga request for " + manga._id);
     var request = new XMLHttpRequest();
     request.open('GET', 'http://www.mangaeden.com/api/manga/' + manga._id, true);
     request.onreadystatechange = function(){
@@ -36,11 +37,15 @@ app.get('/', (request, response) => {
 
 app.get('/mangaList', (request, response) => {
   var list = DB.getList().then((doc) => {
+    console.log("database returned:");
+    console.log(list);
     var promises = [];
     doc.forEach((e) => {
       promises.push(getManga(e));
     });
     Promise.all(promises).then((manga) => {
+      console.log("promise done:")
+      console.log(manga);
       body = manga;
       response.statusCode = 200;
       response.setHeader('Content-Type', 'application/json');
@@ -48,6 +53,8 @@ app.get('/mangaList', (request, response) => {
       const responseBody = { headers, method, url, body };
 
       response.send(JSON.stringify(responseBody));
+    }).catch(() => {
+      response.send("None.");
     });
   });
 });
