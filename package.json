@@ -4,7 +4,8 @@
   "description": "A simple server to respond to http request and talk to a database",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "dev": "babel src --out-dir lib && node lib/index.js"
   },
   "repository": {
     "type": "git",
@@ -17,7 +18,13 @@
   },
   "homepage": "https://github.com/Kjames5269/aSimpleServer#readme",
   "dependencies": {
-    "mongo": "^0.1.0",
     "express": "^3.0.0",
+    "bluebird": "^3.5.1",
+    "mongo": "^0.1.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-export-extensions": "^6.22.0",
+    "babel-preset-es2015": "^6.24.1"
   }
 }
