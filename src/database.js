@@ -6,6 +6,8 @@ const url=secret.db;
 function base(queryFunc) {
   return new Promise((resolve, reject) => {
     MongoClient.connect(url, (err, db) => {
+      console.log("Connected?");
+      console.log(err);
       const col = db.collection('mangaList');
       const abst = queryFunc(col);
       abst((err,doc) => {

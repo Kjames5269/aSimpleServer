@@ -27,6 +27,11 @@ function getManga(manga) {
   });
 }
 
+var list = DB.getList().then((doc) => {
+    console.log("database returned:");
+    console.log(list);
+});
+
 app.listen(8080, () => {
   console.log("Listening now on port 8080!");
 });
@@ -36,6 +41,7 @@ app.get('/', (request, response) => {
 });
 
 app.get('/mangaList', (request, response) => {
+  console.log("starting mangaList request");
   var list = DB.getList().then((doc) => {
     console.log("database returned:");
     console.log(list);
