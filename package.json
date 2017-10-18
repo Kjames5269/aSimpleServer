@@ -6,7 +6,7 @@
   "scripts": {
     "test": "test",
     "dev": "babel src --out-dir lib && node lib/index.js",
-    "start": "npm install && babel src --out-dir lib && node lib/index.js"
+    "start": "node lib/index.js"
   },
   "repository": {
     "type": "git",
@@ -20,8 +20,10 @@
   "homepage": "https://github.com/Kjames5269/aSimpleServer#readme",
   "dependencies": {
     "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
     "express": "^3.0.0",
-    "mongodb": "^2.2.33"
+    "mongodb": "^2.2.33",
+    "request": "^2.83.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

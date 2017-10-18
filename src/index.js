@@ -2,102 +2,128 @@ const http = require('http');
 const DB = require('./database.js');
 const Promise = require('bluebird');
 const express = require('express');
+const BP = require('body-parser');
+const REQ = require('request');
+
 var app = express();
+app.use(BP.urlencoded({ extended: true }));
+
+//DB.insertInto("kjames", "Manga!", "123123", 1);
+//DB.updateCh("kjames", "123123");
+//DB.setCh("kjames", "541aabc045b9ef49009d69b6", 290);
+
+function getChapter(chapters, ch) {
+  return chapters.filter((e) => {
+    return e[0] == ch;
+  })[0];
+  //  Return only the first element of the 2d array
+}
 
 function getManga(manga) {
   return new Promise((resolve, reject) => {
-    console.log("Making a getManga request for " + manga._id);
-    var request = new XMLHttpRequest();
-    request.open('GET', 'http://www.mangaeden.com/api/manga/' + manga._id, true);
-    request.onreadystatechange = function(){
-    if (request.readyState === 4 && request.status === 200){
-      var response = JSON.parse(request.response)
-      var latestChapter = response.chapters[0][0];
-      var charr = response.chapters[0];
-      var chName=charr[2].split(/[^A-Za-z ]/)[0];
-        if (latestChapter == manga.ch ) {
-          resolve({name: manga.name, chName: chName, ch: charr[0], id: charr[3]})
-        }
-        else {
-          reject("Not out yet");
-        }
+    const url = 'http://www.mangaeden.com/api/manga/' + manga.id;
+
+    REQ.get(url, ((err, res, body) => {
+      if(err) {
+        console.log("Error with" + JSON.stringify(manga));
+        console.log(err);
+        return;
       }
-    };
-    request.send();
+
+      var response = JSON.parse(body);
+      var latestChapter = response.chapters[0][0];
+
+      if ( latestChapter >= manga.ch ) {
+        var charr = getChapter(response.chapters, manga.ch);
+        var chName=charr[2].split(/[^A-Za-z ]/)[0];
+        console.log("Found " + manga.name + " chapter " + chName);
+        resolve({name: manga.name, chName: chName, ch: charr[0], id: charr[3]})
+      }
+      else {
+        reject();
+      }
+    }));
   });
 }
 
-var list = DB.getList().then((doc) => {
-    console.log("database returned:");
-    console.log(list);
-});
 
 app.listen(8080, () => {
   console.log("Listening now on port 8080!");
 });
 
 app.get('/', (request, response) => {
-  response.send("Some text for now");
+  response.send("<form action=\"/mangaList/kjames\" method=\"post\">"
+                  + "<input type=\"submit\" value=\"Submit\" />"
+                  + "<input type=\"text\" name=\"usr\" value=\"kjames\" />"
+                  + "<input type=\"text\" name=\"name\" value=\"\" />"
+                  + "<input type=\"text\" name=\"ch\" value=\"42\" />"
+                  + "</form>"
+                );
 });
 
-app.get('/mangaList', (request, response) => {
-  console.log("starting mangaList request");
-  var list = DB.getList().then((doc) => {
-    console.log("database returned:");
-    console.log(list);
+app.get('/mangaList/:userId', (request, response) => {
+  const usr = request.params.userId;
+  var list = DB.getList(usr).then((doc) => {
+
     var promises = [];
     doc.forEach((e) => {
       promises.push(getManga(e));
     });
-    Promise.all(promises).then((manga) => {
-      console.log("promise done:")
-      console.log(manga);
-      body = manga;
-      response.statusCode = 200;
-      response.setHeader('Content-Type', 'application/json');
 
-      const responseBody = { headers, method, url, body };
+    let data = [];
 
-      response.send(JSON.stringify(responseBody));
-    }).catch(() => {
-      response.send("None.");
+    Promise.all(promises.map((promise) => {
+      return promise.reflect();
+    })).each((inspection) => {
+      if(inspection.isFulfilled()) {
+
+        var manga = inspection.value();
+        response.statusCode = 200;
+        data.push(manga);
+      }
+    }).then((manga) => {
+      console.log("all done");
+      if(data.length == 0) {
+        response.statusCode = 404;
+      }
+      response.send(data);
     });
   });
 });
-/*Ihttp.createServer((request, response) => {
-  const { headers, method, url } = request;
-  var body = [];
 
-  if( method === 'GET' && url === '/mangaList') {
-    request.on('error', (err) => {
-      console.error(err);
-    }).on('end', () => {
+app.post('/mangaList/:userId', (req, res) => {
+  console.log(req.body);
+  const name = namePrep(req.body.name);
+  const usr = req.body.usr;
+  const ch = req.body.ch;
 
-      var list = DB.getList().then((doc) => {
-        var promises = [];
-        doc.forEach((e) => {
-          promises.push(getManga(e));
-        });
-        Promise.all(promises).then((manga) => {
-          body = manga;
-          response.statusCode = 200;
-          response.setHeader('Content-Type', 'application/json');
+  http.get('http://www.mangaeden.com/api/list/0/', ((stream) => {
+    const { statusCode } = stream;
+    if(statusCode != 200) {
 
-          const responseBody = { headers, method, url, body };
+    }
 
-          response.end(JSON.stringify(responseBody));
-        });
-      });
+    stream.setEncoding('utf8');
+    let data = '';
+    stream.on('data', (d) => { data += d });
+    stream.on('end', () => {
+      const list = JSON.parse(data);
+      var manga = list.manga.filter(function(e) {
+				return e.a == name;
+			});
+      if(manga.length == 0) {
+        res.send("Manga not found");
+      }
+      else {
+        DB.insertInto(usr, name, manga[0].i, ch);
+        res.send("Added " + name + "!");
+      }
     });
-  }
-  else if( method === 'GET' && url === '/next') {
+  }));
+});
 
-  }
-  else if ( method === 'POST' && url === '/mangaList') {
-
-  }
-  else {
-    response.statusCode = 404;
-    response.end();
-  }
-}).listen(8080); */
+function namePrep(name) {
+  name = name.toLowerCase();
+  name = name.replace(/ /g, '-');
+  return name;
+}

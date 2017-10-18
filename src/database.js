@@ -6,44 +6,59 @@ const url=secret.db;
 function base(queryFunc) {
   return new Promise((resolve, reject) => {
     MongoClient.connect(url, (err, db) => {
-      console.log("Connected?");
-      console.log(err);
       const col = db.collection('mangaList');
       const abst = queryFunc(col);
       abst((err,doc) => {
-        db.close();
         if(err === null) {
-          resolve(doc);
+          resolve(doc.mangaList);
         }
         else {
           reject(err);
         }
+        db.close();
       });
     });
   });
 }
 
-export function getList() {
-  return base((col) => col.find().toArray());
+export function getList(usr) {
+  return base((col) => col.findOne.bind(col, {"_id": usr}));
 }
 
 //export function get
 
-export function insertInto(name, id, ch) {
+export function insertInto(usr, name, id, ch) {
   return base((col) => {
-    return col.insertOne({
-      "name": name,
-      "_id": id,
-      "ch": ch,
+    return col.findOneAndUpdate.bind(col,
+      { "_id": usr },
+      { "$pull": { "mangaList": { "id": id }}}
+    );
+  })
+  .then(() => {
+    return base((col) => {
+      return col.findOneAndUpdate.bind(col,
+        { "_id": usr },
+        { "$push": { mangaList: { "name": name, "id": id, "ch": ch }}},
+        { "upsert": true }
+      );
     });
   });
 }
 
-export function updateCh(id) {
+export function updateCh(usr, id) {
   return base((col) => {
-    return col.findOneAndUpdate(
-      { "_id": id },
-      {"$inc": {"ch" : 1}}
+    return col.findOneAndUpdate.bind(col,
+      { "_id": usr, "mangaList.id": { $eq: id }},
+      {"$inc": {"mangaList.$.ch" : 1}}
       );
   });
+}
+
+export function setCh(usr, id, ch) {
+  return base((col) => {
+    return col.findOneAndUpdate.bind(col,
+      { "_id": usr, "mangaList.id": { $eq: id }},
+      { "$set": { "mangaList.$.ch": ch }}
+    )
+  })
 }
