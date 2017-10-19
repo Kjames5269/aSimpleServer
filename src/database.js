@@ -10,7 +10,8 @@ function base(queryFunc) {
       const abst = queryFunc(col);
       abst((err,doc) => {
         if(err === null) {
-          resolve(doc.mangaList);
+          const retval = (doc != null) ? doc.mangaList : [];
+          resolve(retval);
         }
         else {
           reject(err);
