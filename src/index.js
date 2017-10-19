@@ -80,7 +80,7 @@ function getFirstOrLastChapter(manga, f) {
 function insertAndReturn(res, usr, foundManga) {
   DB.insertInto(usr, foundManga);
   res.statusCode = 201;
-  res.send("Added " + name + "!");
+  res.send("Added " + foundManga.name + "!");
 }
 
 function namePrep(name) {
