@@ -8,10 +8,10 @@ const REQ = require('request');
 var app = express();
 app.use(BP.urlencoded({ extended: true }));
 
-//DB.insertInto("kjames", "Manga!", "123123", 1);
-//DB.updateCh("kjames", "123123");
-//DB.setCh("kjames", "541aabc045b9ef49009d69b6", 290);
+// -=-=-=-=-=-=-=- FUNCTIONS -=-=-=-=-=-=-==-=-=
 
+//  Gets the next or current chapter from a list of chapters.
+//  These are in reverse order.
 function findChapter(chapters, ch, next=0) {
   var i;
   for (i = 0; i < chapters.length; i++) {
@@ -20,85 +20,82 @@ function findChapter(chapters, ch, next=0) {
     }
   }
   return null;
-  //  Return only the first element of the 2d array
 }
 
-function getManga(manga) {
+//  Returns the POJO from mangaeden
+function mangaConnect(manga) {
   return new Promise((resolve, reject) => {
     const url = 'http://www.mangaeden.com/api/manga/' + manga.id;
-
+    //console.log(url);
     REQ.get(url, ((err, res, body) => {
       if(err) {
-        console.log("Error with" + JSON.stringify(manga));
-        console.log(err);
+        reject("Error with" + JSON.stringify(manga));
+        //console.log(err);
         return;
       }
+      resolve(JSON.parse(body));
+    }));
+  });
+}
 
-function getLatestChapter(manga) {
+//  Gets rid of [LQ]
+function splitChName(name) {
+  return name.split(/[^A-Za-z ]/)[0];
+}
+
+// Gets either the current chapter or the next chapter of the manga
+function getChapter(manga, next = 0) {
   return new Promise((resolve, reject) => {
     mangaConnect(manga).then((response) => {
-      var latestChapter = response.chapters[0][0];
+      var charr = findChapter(response.chapters, manga.ch, next);
 
-      if ( latestChapter == manga.ch ) {
-        var charr = response.chapters[0];
-        var chName=splitChName(charr[2]);
-        console.log("Found " + manga.name + " chapter " + chName);
-        resolve({name: manga.name, chName: chName, ch: charr[0], chId: charr[3]})
-      }
-      else {
-        reject();
-      }
+      const chName = (charr != null) ? splitChName(charr[2]) : null;
+      const chId = (charr != null) ? (charr[3]) : null;
+      const ch = (charr != null) ? charr[0] : manga.ch;
+      resolve({name: manga.name, id: manga.id, chName: chName, ch: ch, chId: chId})
+    });
+  });
+}
+
+//  Gets the chapers array and picks the index based off function f.
+function getFirstOrLastChapter(manga, f) {
+  return new Promise((resolve, reject) => {
+    mangaConnect(manga).then((data) => {
+      var charr = data.chapters[f(data.chapters_len)];
+      var chName=splitChName(charr[2]);
+      resolve({name: manga.name,id: manga.id, chName: chName, ch: charr[0], chId: charr[3]});
     }).catch((err) => {
-      console.log(err);
+      //console.log(err);
       reject(err);
     });
   });
 }
 
-function splitChName(name) {
-  return name.split(/[^A-Za-z ]/)[0];
+function insertAndReturn(res, usr, foundManga) {
+  DB.insertInto(usr, foundManga);
+  res.statusCode = 201;
+  res.send("Added " + name + "!");
 }
 
-//  manga {name ch id}
-function getChapter(manga, next = 0) {
-  return new Promise((resolve, reject) => {
-    mangaConnect(manga).then((response) => {
-      var charr = findChapter(response.chapters, manga.ch, next);
-      if(charr == null) {
-        resolve(null);
-      }
-      var chName=splitChName(charr[2]);
-      resolve({name: manga.name, chName: chName, ch: charr[0], chId: charr[3]})
-    });
-  });
+function namePrep(name) {
+  name = name.toLowerCase();
+  name = name.replace(/ /g, '-');
+  return name;
 }
 
-function getFirstChapter(manga) {
-  return new Promise((resolve, reject) => {
-    mangaConnect(manga).then((data) => {
-      resolve(data.chapters[data.chapters_len-1]);
-    }).catch((err) => {
-      console.log(err);
-    });
-  });
-}
+// =-=-=-=-=-=-=-=-= EXPRESS =-=-=-=-=-=-=-=-=-=-=-=-
 
-
-app.listen(8080, () => {
-  console.log("Listening now on port 8080!");
-});
-
-app.get('/', (request, response) => {
-  response.send("<form action=\"/mangaList/kjames\" method=\"post\">"
+/*app.get('/debug', (request, response) => {
+  response.send("<form action=\"/\" method=\"post\">"
                   + "<input type=\"submit\" value=\"Submit\" />"
                   + "<input type=\"text\" name=\"usr\" value=\"kjames\" />"
                   + "<input type=\"text\" name=\"name\" value=\"\" />"
                   + "<input type=\"text\" name=\"ch\" value=\"42\" />"
                   + "</form>"
                 );
-});
+}); */
 
-app.get('/mangaList/:userId', (request, response) => {
+app.get('/:userId', (request, response) => {
   const usr = request.params.userId;
   var list = DB.getList(usr).then((doc) => {
 
@@ -106,41 +103,42 @@ app.get('/mangaList/:userId', (request, response) => {
     var promises = [];
     doc.forEach((e) => {
       if(e.chId == null)
-        promises.push(getLatestChapter(e));
+        promises.push(getChapter(e, 1));
       else
         data.push(e);
     });
 //    promises.push(getFirstChapter(doc[1]));
 
-    Promise.all(promises.map((promise) => {
-      return promise.reflect();
-    })).each((inspection) => {
-      if(inspection.isFulfilled()) {
-
-        var manga = inspection.value();
-        response.statusCode = 200;
-        data.push(manga);
-      }
-    }).then((manga) => {
-      console.log("all done");
-      if(data.length == 0) {
-        response.statusCode = 404;
-      }
+    Promise.all(promises).then((manga) => {
+      console.log(manga);
+      response.statusCode = 200;
+      manga.forEach((e) => {
+        if(e.chId != null) {
+          data.push(e);
+          DB.setChapter(usr, e);
+        }
+      })
       response.send(data);
     });
   });
 });
 
-app.post('/mangaList/:userId', (req, res) => {
+app.post('/', (req, res) => {
   console.log(req.body);
   const name = namePrep(req.body.name);
-  const usr = req.body.usr;
-  var ch = req.body.ch;
+  const { usr, ch } = req.body;
+
+  if(usr == "" || ch == "") {
+    res.send("error");
+    return;
+  }
 
   http.get('http://www.mangaeden.com/api/list/0/', ((stream) => {
     const { statusCode } = stream;
     if(statusCode != 200) {
-
+      res.statusCode = 500;
+      res.send("Internal error");
+      return;
     }
 
     stream.setEncoding('utf8');
@@ -152,55 +150,72 @@ app.post('/mangaList/:userId', (req, res) => {
 				return e.a == name;
 			});
       if(manga.length == 0) {
+        res.statusCode = 404;
         res.send("Manga not found");
+        return;
+      }
+
+      var miniManga = {"name": manga[0].a, "id": manga[0].i, "ch": ch, "chId": null, "chName": null };
+
+      if(ch == "first") {
+        getFirstOrLastChapter(miniManga, (d) => { return d -1 }).then((foundManga) => {
+
+          insertAndReturn(res, usr, foundManga);
+        });
+      }
+      else if(ch == "current") {
+        getFirstOrLastChapter(miniManga, (d) => { return 0 }).then((foundManga) => {
+
+          //  Current or caught up set the ID to null since we cant find it
+          foundManga.chId = null;
+          foundManga.chName = null;
+
+          insertAndReturn(res, usr, foundManga);
+        });
+      }
+      else if (!isNaN(ch)){
+        getChapter(miniManga).then((foundManga) => {
+
+          insertAndReturn(res, usr, foundManga);
+        })
       }
       else {
-        console.log(ch);
-        if(ch == "first") {
-          getFirstChapter({"id": manga[0].i}).then((foundManga) => {
-            console.log(foundManga);
-            //DB.insertInto(usr, name, manga[0].i, foundManga);
-            res.send("Added " + name + "!");
-          });
-        }
-        else {
-          getChapter(manga).then((foundManga) => {
-            const chId = foundManga[0] || null;
-            const chName = foundManga[2] || null;
-
-            DB.insertInto(usr, name, manga[0].i, chId, chName);
-            res.send("Added " + name + "!");
-          })
-        }
+        res.statusCode = 400;
+        res.send("Error with ch " + ch);
       }
     });
   }));
 });
 
-app.post('/getNext/:userId/:mangaName', (req, res) => {
+//  This prefetches the data so read it or leave it
+
+app.get('/getChapter/:userId/:mangaName', (req, res) => {
   const usr = req.params.userId;
   const mName = namePrep(req.params.mangaName);
-  DB.getManga(usr,mName).then(doc) => {
-    console.log(doc);
-    res.send(doc);
+  DB.getList(usr).then((doc) => {
+    //console.log(manga);
+    var manga = doc.filter((e) => {
+      return e.name == mName;
+    })[0];
 
-    //  prefetch the next chapter.
+    if(manga.chId != null) {
+      res.send(manga);
 
-
-
-  }
+      //  prefetch the next chapter.
+      getChapter(manga, 1).then((update) => {
+        //console.log(update);
+        if(update.chId != manga.chId) {
+          DB.setChapter(usr, update);
+        }
+      });
+    }
+    else {
+      res.send(manga.name + " chapter " + (manga.ch +1) + " is not out yet");
+    }
+  });
 });
 
-app.post('/stop/:userId/:mangaName' (req, res) => {
-  const usr = req.params.userId;
-  const mName = namePrep(req.params.mangaName);
 
-
-
+app.listen(8080, () => {
+  console.log("Listening now on port 8080!");
 });
-
-function namePrep(name) {
-  name = name.toLowerCase();
-  name = name.replace(/ /g, '-');
-  return name;
-}
