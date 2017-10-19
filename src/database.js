@@ -25,9 +25,14 @@ export function getList(usr) {
   return base((col) => col.findOne.bind(col, {"_id": usr}));
 }
 
+export function getManga(usr, mName) {
+  return base((col) => col.findOne.bind(col,
+    {"_id": usr, "mangaList": { "$elemMatch": { "name": mName }}}));
+}
+
 //export function get
 
-export function insertInto(usr, name, id, ch) {
+export function insertInto(usr, name, id, ch, chId) {
   return base((col) => {
     return col.findOneAndUpdate.bind(col,
       { "_id": usr },
@@ -38,27 +43,27 @@ export function insertInto(usr, name, id, ch) {
     return base((col) => {
       return col.findOneAndUpdate.bind(col,
         { "_id": usr },
-        { "$push": { mangaList: { "name": name, "id": id, "ch": ch }}},
+        { "$push": { mangaList: {
+          "name": name, "id": id, "ch": ch, "chId": chId,
+          "chName": chName
+        }}},
         { "upsert": true }
       );
     });
   });
 }
 
-export function updateCh(usr, id) {
-  return base((col) => {
-    return col.findOneAndUpdate.bind(col,
-      { "_id": usr, "mangaList.id": { $eq: id }},
-      {"$inc": {"mangaList.$.ch" : 1}}
-      );
-  });
+export function setChapter(usr, manga) {
+    return setCh( usr, manga.id, manga.ch, manga.chId, manga.chName );
 }
 
-export function setCh(usr, id, ch) {
+function setCh(usr, id, ch, chId, chName) {
   return base((col) => {
     return col.findOneAndUpdate.bind(col,
       { "_id": usr, "mangaList.id": { $eq: id }},
-      { "$set": { "mangaList.$.ch": ch }}
+      { "$set": { "mangaList.$.ch": ch,
+                  "mangaList.$.chId": chId
+                  "mangaList.$.chName": chName }}
     )
   })
 }
