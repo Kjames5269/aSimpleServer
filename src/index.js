@@ -7,6 +7,12 @@ const REQ = require('request');
 
 var app = express();
 app.use(BP.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+})
 
 // -=-=-=-=-=-=-=- FUNCTIONS -=-=-=-=-=-=-==-=-=
 
@@ -110,7 +116,7 @@ app.get('/:userId', (request, response) => {
 //    promises.push(getFirstChapter(doc[1]));
 
     Promise.all(promises).then((manga) => {
-      console.log(manga);
+      //console.log(manga);
       response.statusCode = 200;
       manga.forEach((e) => {
         if(e.chId != null) {
@@ -124,7 +130,7 @@ app.get('/:userId', (request, response) => {
 });
 
 app.post('/', (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
   const name = namePrep(req.body.name);
   const { usr, ch } = req.body;
 
