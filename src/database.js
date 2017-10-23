@@ -29,9 +29,10 @@ export function getList(usr) {
 //export function get
 
 export function insertInto(usr, manga) {
+	console.log(manga);
     return insert( usr, manga.name, manga.id, manga.currCh.ch,
          manga.currCh.chId, manga.currCh.chName, manga.nextCh.ch,
-         manga.nextCh.nextChId, manga.nextCh.nextChId );
+         manga.nextCh.chId, manga.nextCh.chName );
 }
 
 //  just a thousand parameters nothing to see here...
