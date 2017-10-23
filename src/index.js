@@ -60,7 +60,7 @@ function getChapter(manga) {
       const chName = (charr != null) ? splitChName(charr[2]) : null;
       const chId = (charr != null) ? (charr[3]) : null;
       const ch = (charr != null) ? charr[0] : manga.ch;
-      
+
       const nextarr = chObj.next;
 
       const nextChName = (nextarr != null) ? splitChName(nextarr[2]) : null;
@@ -128,7 +128,7 @@ app.get('/debug', (request, response) => {
                   + "<input type=\"text\" name=\"ch\" value=\"42\" />"
                   + "</form>"
                 );
-}); 
+});
 
 app.get('/:userId', (request, response) => {
   const usr = request.params.userId;
@@ -137,8 +137,8 @@ app.get('/:userId', (request, response) => {
     let data = [];
     var promises = [];
     doc.forEach((e) => {
-      if(e.chId == null)
-        promises.push(getChapter(e, 1));
+      if(e.currCh.chId == null)
+        promises.push(getChapter(e));
       else
         data.push(e);
     });
@@ -148,7 +148,7 @@ app.get('/:userId', (request, response) => {
       //console.log(manga);
       response.statusCode = 200;
       manga.forEach((e) => {
-        if(e.chId != null) {
+        if(e.currCh.chId != null) {
           data.push(e);
           DB.setChapter(usr, e);
         }

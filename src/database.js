@@ -66,6 +66,8 @@ function insert(usr, name, id, ch, chId, chName, nextCh, nextChId, nextChName) {
 }
 
 export function setChapter(usr, manga) {
+    console.log("database(): Set chapter");
+    console.log(manga);
     return setCh( usr, manga.id, manga.currCh.ch, manga.currCh.chId,
         manga.currCh.chName, manga.nextCh.ch, manga.nextCh.chId,
         manga.nextCh.chName
