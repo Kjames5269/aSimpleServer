@@ -76,7 +76,7 @@ function getChapter(manga) {
       var nextarr = (chObj != null ) ? chObj.next : null;
       var bool = false;
 
-      if(!manga.currCh.id && nextarr) {
+      if(!manga.currCh.chId && nextarr) {
           chObj = findChapter(response.chapters, nextarr[0]);
           charr = (chObj != null ) ? chObj.curr : null;
           nextarr = (chObj != null ) ? chObj.next : null;
