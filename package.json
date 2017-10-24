@@ -6,6 +6,7 @@
   "scripts": {
     "test": "test",
     "dev": "babel src --out-dir lib && node lib/index.js",
+    "compile": "babel src --out-dir lib",
     "start": "node lib/index.js"
   },
   "repository": {
