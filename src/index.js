@@ -49,9 +49,23 @@ function splitChName(name) {
   return name.split(/[^A-Za-z] |-/)[0];
 }
 
-// Gets either the current chapter or the next chapter of the manga
-//  Takes in a manga object with currCh deaulted or the last chapter
-//  that given
+//  Gets the chapter that was asked for and the next chapter.
+//  Paramters:
+//  a Manga object with the currCh feild the chapter you are looking for.
+/*
+manga =
+    {
+        id: "string",
+        name: "string"
+        currCh: {
+            id: "string",
+            name: "string",
+            ch: integer
+        }
+    }
+//  If the currCh if field is null then it will look for the next chapter that is out
+*/
+
 function getChapter(manga) {
   return new Promise((resolve, reject) => {
     mangaConnect(manga).then((response) => {
@@ -59,13 +73,24 @@ function getChapter(manga) {
 
       console.log("getChapter():");
       console.log(manga);
+      console.log(chObj);
 
-      const charr = (chObj != null ) ? chObj.curr : null;
-      const nextarr = (chObj != null ) ? chObj.next : null;
- 
-      const chName = (charr != null && manga.currCh.chId != null) ? splitChName(charr[2]) : null;
-      const chId = (charr != null && manga.currCh.chId != null) ? (charr[3]) : null;
-      const ch = (charr != null) ? charr[0] : manga.currCh.ch;    
+      var charr = (chObj != null ) ? chObj.curr : null;
+      var nextarr = (chObj != null ) ? chObj.next : null;
+      var bool = false;
+
+      if(!manga.currCh.id && nextarr) {
+          chObj = findChapter(response.chapters, nextarr[0]);
+          charr = (chObj != null ) ? chObj.curr : null;
+          nextarr = (chObj != null ) ? chObj.next : null;
+          bool = true;
+      }
+
+      //  If there is no next and we were passed a null value as a id that means
+      //  we are looking for the newest chapter. if this is the case return with an ID of null.
+      const chName = (charr != null && (manga.currCh.chId != null || bool)) ? splitChName(charr[2]) : null;
+      const chId = (charr != null && (manga.currCh.chId != null || bool)) ? (charr[3]) : null;
+      const ch = (charr != null) ? charr[0] : manga.currCh.ch;
 
       const nextChName = (nextarr != null) ? splitChName(nextarr[2]) : null;
       const nextChId = (nextarr != null) ? (nextarr[3]) : null;
