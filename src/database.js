@@ -65,9 +65,15 @@ function insert(usr, name, id, ch, chId, chName, nextCh, nextChId, nextChName) {
   });
 }
 
+export function removeManga(usr, mangaName) {
+    return base((col) => {
+        return col.findOneAndUpdate.bind(col,
+        { "_id": usr },
+        { "$pull": { "mangaList": { "name": mangaName }}});
+    });
+}
+
 export function setChapter(usr, manga) {
-    console.log("database(): Set chapter");
-    console.log(manga);
     return setCh( usr, manga.id, manga.currCh.ch, manga.currCh.chId,
         manga.currCh.chName, manga.nextCh.ch, manga.nextCh.chId,
         manga.nextCh.chName

@@ -63,17 +63,14 @@ manga =
             ch: integer
         }
     }
-//  If the currCh if field is null then it will look for the next chapter that is out
+  If the currCh id field is null then it will look for the next chapter that is out
+  following the currCh chapter feild.
 */
 
 function getChapter(manga) {
   return new Promise((resolve, reject) => {
     mangaConnect(manga).then((response) => {
-	      var chObj = findChapter(response.chapters, manga.currCh.ch);
-
-      console.log("getChapter():");
-      console.log(manga);
-      console.log(chObj);
+	  var chObj = findChapter(response.chapters, manga.currCh.ch);
 
       var charr = (chObj != null ) ? chObj.curr : null;
       var nextarr = (chObj != null ) ? chObj.next : null;
@@ -149,7 +146,7 @@ function namePrep(name) {
 
 // =-=-=-=-=-=-=-=-= EXPRESS =-=-=-=-=-=-=-=-=-=-=-=-
 
-app.get('/debug', (request, response) => {
+/*app.get('/debug', (request, response) => {
   response.send("<form action=\"/\" method=\"post\">"
                   + "<input type=\"submit\" value=\"Submit\" />"
                   + "<input type=\"text\" name=\"usr\" value=\"kjames\" />"
@@ -157,7 +154,7 @@ app.get('/debug', (request, response) => {
                   + "<input type=\"text\" name=\"ch\" value=\"42\" />"
                   + "</form>"
                 );
-});
+}); */
 
 app.get('/:userId', (request, response) => {
   const usr = request.params.userId;
@@ -252,6 +249,19 @@ app.post('/', (req, res) => {
 });
 
 //  This prefetches the data so read it or leave it
+
+app.post('/remove/', (req, res) => {
+    const name = namePrep(req.body.name);
+    const { usr } = req.body;
+
+    if(usr == "" || name == "") {
+      res.send("error");
+      return;
+    }
+    DB.removeManga(usr, name).then(() => {
+        res.send(name + " has been removed!");
+    });
+})
 
 app.get('/getChapter/:userId/:mangaName', (req, res) => {
   const usr = req.params.userId;
