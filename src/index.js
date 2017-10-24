@@ -50,18 +50,22 @@ function splitChName(name) {
 }
 
 // Gets either the current chapter or the next chapter of the manga
+//  Takes in a manga object with currCh deaulted or the last chapter
+//  that given
 function getChapter(manga) {
   return new Promise((resolve, reject) => {
     mangaConnect(manga).then((response) => {
 	      var chObj = findChapter(response.chapters, manga.currCh.ch);
 
-      const charr = chObj.curr;
+      console.log("getChapter():");
+      console.log(manga);
 
-      const chName = (charr != null) ? splitChName(charr[2]) : null;
-      const chId = (charr != null) ? (charr[3]) : null;
-      const ch = (charr != null) ? charr[0] : manga.ch;
-
-      const nextarr = chObj.next;
+      const charr = (chObj != null ) ? chObj.curr : null;
+      const nextarr = (chObj != null ) ? chObj.next : null;
+ 
+      const chName = (charr != null && manga.currCh.chId != null) ? splitChName(charr[2]) : null;
+      const chId = (charr != null && manga.currCh.chId != null) ? (charr[3]) : null;
+      const ch = (charr != null) ? charr[0] : manga.currCh.ch;    
 
       const nextChName = (nextarr != null) ? splitChName(nextarr[2]) : null;
       const nextChId = (nextarr != null) ? (nextarr[3]) : null;
@@ -189,8 +193,8 @@ app.post('/', (req, res) => {
         res.send("Manga not found");
         return;
       }
-
-      var miniManga = {"name": manga[0].a, "id": manga[0].i, "currCh": {"ch": ch, "chId": null, "chName": null }};
+      const defaultId = 123123;
+      var miniManga = {"name": manga[0].a, "id": manga[0].i, "currCh": {"ch": ch, "chId": defaultId, "chName": null }};
 
       if(ch == "first") {
         getFirstOrLastChapter(miniManga, (d) => { return d -1 }).then((foundManga) => {
@@ -233,31 +237,32 @@ app.get('/getChapter/:userId/:mangaName', (req, res) => {
       return e.name == mName;
     })[0];
 
-    if(manga.chId != null) {
+    if(manga.currCh.chId != null) {
       res.send(manga);
 
-      //  prefetch the next chapter.
+      //  prefetch the next chapter
 
-      const nextManga = { name: manga.name, id: manga.id, currCh: { ch: manga.nextCh,
-                          chId: manga.nextChId, chName: manga.nextChName }};
+      const nextCh = (manga.nextCh.ch == null) ? manga.currCh.ch : manga.nextCh.ch;
+
+      const nextManga = { name: manga.name, id: manga.id, currCh: { ch: nextCh,
+                          chId: manga.nextCh.chId, chName: manga.nextCh.chName }};
 
       getChapter(nextManga).then((update) => {
         //console.log(update);
-        if(update.chId != manga.chId) {
-            const nextCh = (!manga.nextCh.ch) ? manga.currCh.ch : null
+        if(update.currCh.chId != manga.currCh.chId) {
 
             const updatedManga = {
                 name: manga.name,
                 id: manga.id,
                 currCh: {
-                    ch: nextCh,
-                    chId: manga.nextCh.chId,
-                    chName: manga.nectCh.chName,
-                },
-                nextCh: {
                     ch: update.currCh.ch,
                     chId: update.currCh.chId,
                     chName: update.currCh.chName,
+                },
+                nextCh: {
+                    ch: update.nextCh.ch,
+                    chId: update.nextCh.chId,
+                    chName: update.nextCh.chName,
                 }
             }
           DB.setChapter(usr, updatedManga);
@@ -265,7 +270,7 @@ app.get('/getChapter/:userId/:mangaName', (req, res) => {
       });
     }
     else {
-      res.send(manga.name + " chapter " + (manga.ch +1) + " is not out yet");
+      res.send(manga.name + " chapter " + (manga.currCh.ch +1) + " is not out yet");
     }
   });
 });
