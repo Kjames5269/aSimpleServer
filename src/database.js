@@ -29,10 +29,14 @@ export function getList(usr) {
 //export function get
 
 export function insertInto(usr, manga) {
-    return insert( usr, manga.name, manga.id, manga.ch, manga.chId, manga.chName );
+	console.log(manga);
+    return insert( usr, manga.name, manga.id, manga.currCh.ch,
+         manga.currCh.chId, manga.currCh.chName, manga.nextCh.ch,
+         manga.nextCh.chId, manga.nextCh.chName );
 }
 
-function insert(usr, name, id, ch, chId, chName) {
+//  just a thousand parameters nothing to see here...
+function insert(usr, name, id, ch, chId, chName, nextCh, nextChId, nextChName) {
   return base((col) => {
     return col.findOneAndUpdate.bind(col,
       { "_id": usr },
@@ -44,8 +48,16 @@ function insert(usr, name, id, ch, chId, chName) {
       return col.findOneAndUpdate.bind(col,
         { "_id": usr },
         { "$push": { mangaList: {
-          "name": name, "id": id, "ch": ch, "chId": chId,
-          "chName": chName
+          "name": name,
+          "id": id,
+          "currCh": {
+              "ch": ch, "chId": chId,
+              "chName": chName
+          },
+          "nextCh": {
+              "ch": nextCh, "chId": nextChId,
+              "chName": nextChName
+          }
         }}},
         { "upsert": true }
       );
@@ -53,17 +65,31 @@ function insert(usr, name, id, ch, chId, chName) {
   });
 }
 
-export function setChapter(usr, manga) {
-    return setCh( usr, manga.id, manga.ch, manga.chId, manga.chName );
+export function removeManga(usr, mangaName) {
+    return base((col) => {
+        return col.findOneAndUpdate.bind(col,
+        { "_id": usr },
+        { "$pull": { "mangaList": { "name": mangaName }}});
+    });
 }
 
-function setCh(usr, id, ch, chId, chName) {
+export function setChapter(usr, manga) {
+    return setCh( usr, manga.id, manga.currCh.ch, manga.currCh.chId,
+        manga.currCh.chName, manga.nextCh.ch, manga.nextCh.chId,
+        manga.nextCh.chName
+     );
+}
+
+function setCh(usr, id, ch, chId, chName, nextCh, nextChId, nextChName) {
   return base((col) => {
     return col.findOneAndUpdate.bind(col,
       { "_id": usr, "mangaList.id": { $eq: id }},
-      { "$set": { "mangaList.$.ch": ch,
-                  "mangaList.$.chId": chId,
-                  "mangaList.$.chName": chName }}
+      { "$set": { "mangaList.$.currCh.ch": ch,
+                  "mangaList.$.currCh.chId": chId,
+                  "mangaList.$.currCh.chName": chName,
+                  "mangaList.$.nextCh.ch": nextCh,
+                  "mangaList.$.nextCh.chId": nextChId,
+                  "mangaList.$.nextCh.chName": nextChName }}
     )
   })
 }
