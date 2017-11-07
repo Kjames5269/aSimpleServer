@@ -69,7 +69,8 @@ function getFirstOrLastChapter(manga, f) {
     mangaConnect(manga).then((data) => {
       var charr = data.chapters[f(data.chapters_len)];
       var chName=splitChName(charr[2]);
-      resolve({name: manga.name,id: manga.id, chName: chName, ch: charr[0], chId: charr[3]});
+      resolve({name: manga.name,id: manga.id,
+        chName: chName, ch: charr[0], chId: charr[3]});
     }).catch((err) => {
       //console.log(err);
       reject(err);
@@ -205,6 +206,7 @@ app.get('/getChapter/:userId/:mangaName', (req, res) => {
     })[0];
 
     if(manga.chId != null) {
+      res.set("Content-Type", 'application/json');
       res.send(manga);
 
       //  prefetch the next chapter.
@@ -216,6 +218,7 @@ app.get('/getChapter/:userId/:mangaName', (req, res) => {
       });
     }
     else {
+      res.set('Content-Type', 'text');
       res.send(manga.name + " chapter " + (manga.ch +1) + " is not out yet");
     }
   });
