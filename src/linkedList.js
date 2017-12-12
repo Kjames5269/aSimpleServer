@@ -1,6 +1,6 @@
 'use strict';
 
-class SNode {
+export class SNode {
   //  Data here is a reference to a DNode.
   //  While it doesn't have to be... it should
   constructor(data) {
@@ -22,7 +22,7 @@ class SNode {
   }
 }
 
-class SLinked {
+export class SLinked {
   constructor() {
     this.head = null;
   }
@@ -59,12 +59,31 @@ class SLinked {
     return null;
   }
 
+  //  Takes an id and a function that will show
+  //  if the value is equal to the data
+  getData(id, eq) {
+    var curr = this.head;
+    if(curr == null)
+      return null;
+
+    if(eq(id, curr)) {
+      return curr.data;
+    }
+    while(curr.next != null) {
+      if(eq(id, curr)) {
+        return curr.data;
+      }
+      curr = curr.next;
+    }
+    return null;
+  }
+
   printHead() {
     console.log(this.head);
   }
 }
 
-class DNode {
+export class DNode {
   constructor(data) {
     this.data = data;
     this.next = null;
@@ -90,10 +109,11 @@ class DNode {
   }
 }
 
-class DLinked {
+export class DLinked {
   constructor() {
     this.head = null;
     this.tail = null;
+    this.size = 0;
   }
 
   /*
@@ -111,6 +131,7 @@ class DLinked {
       this.head = newNode;
       newNode.next.prev = newNode;
     }
+    this.size ++;
     return newNode;
   }
 
@@ -129,6 +150,7 @@ class DLinked {
       this.tail = newNode;
       newNode.prev.next = newNode;
     }
+    this.size ++;
     return newNode;
   }
 
@@ -160,6 +182,7 @@ class DLinked {
       left.next = right;
       right.prev = left;
     }
+    this.size --;
   }
 
 
@@ -171,11 +194,13 @@ class DLinked {
     if(temp === this.tail) {
       this.head = null;
       this.tail = null;
+      size = 0;
       return temp;
     }
     this.head = temp.next;
     this.head.prev = null;
     temp.next = null;
+    this.size --;
     return temp;
   }
   /*
@@ -186,12 +211,23 @@ class DLinked {
     if(temp === this.head) {
       this.head = null;
       this.tail = null;
+      this.size = 0;
       return temp;
     }
     this.tail = temp.prev;
     this.tail.next = null;
     temp.prev = null;
+    this.size --
     return temp;
+  }
+
+  //  Runs a function on each element of the linked list
+  forEach(func) {
+    var curr = this.head;
+    while(curr != null) {
+      func(curr);
+      curr = curr.next;
+    }
   }
 
   /*
@@ -211,9 +247,12 @@ class DLinked {
       curr = curr.prev;
     }
   }
+  getSize() {
+    return this.size;
+  }
 
 }
-
+/*
 var list = new DLinked();
 var node1 = list.insertHead("Fish");
 var node2 = list.insertTail("Swims");
@@ -227,7 +266,7 @@ console.log(list.popBack());
 //list.printListRev();
 list.printList();
 list.printListRev();
-
+console.log(list.getSize());
 console.log("SLinked");
 
 var a = new SLinked();
@@ -236,3 +275,4 @@ a.insertHead("Bar");
 a.insertHead("Leedle");
 a.remove("Bar", (a,b) => a === b );
 a.printHead();
+*/

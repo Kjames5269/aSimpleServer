@@ -4,6 +4,8 @@ const Promise = require('bluebird');
 const express = require('express');
 const BP = require('body-parser');
 const REQ = require('request');
+import { BookMgr } from './MangaMgr.js';
+
 
 var app = express();
 app.use(BP.urlencoded({ extended: true }));
@@ -30,18 +32,7 @@ function findChapter(chapters, ch) {
 
 //  Returns the POJO from mangaeden
 function mangaConnect(manga) {
-  return new Promise((resolve, reject) => {
-    const url = 'http://www.mangaeden.com/api/manga/' + manga.id;
-    //console.log(url);
-    REQ.get(url, ((err, res, body) => {
-      if(err) {
-        reject("Error with" + JSON.stringify(manga));
-        //console.log(err);
-        return;
-      }
-      resolve(JSON.parse(body));
-    }));
-  });
+  return BookMgr.getManga(manga.id);
 }
 
 //  Gets rid of [LQ]
@@ -93,7 +84,9 @@ function getChapter(manga) {
       const nextChId = (nextarr != null) ? (nextarr[3]) : null;
       const nextCh = (nextarr != null) ? nextarr[0] : null;
 
-      resolve({name: manga.name, id: manga.id, currCh: { chName: chName, ch: ch, chId: chId }, nextCh: { chName: nextChName, ch: nextCh, chId: nextChId}});
+      resolve({name: manga.name, id: manga.id,
+        currCh: { chName: chName, ch: ch, chId: chId },
+        nextCh: { chName: nextChName, ch: nextCh, chId: nextChId}});
     });
   });
 }
