@@ -35,9 +35,9 @@ function mangaConnect(manga) {
   return BookMgr.getManga(manga.id);
 }
 
-//  Gets rid of [LQ]
+//  Gets rid of [LQ]. If there is no name then we will return a empty string
 function splitChName(name) {
-  return name.split(/[^A-Za-z] |-/)[0];
+  return (name) ? name.split(/[^A-Za-z] |-/)[0] : "";
 }
 
 //  Gets the chapter that was asked for and the next chapter.
