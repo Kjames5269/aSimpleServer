@@ -300,7 +300,7 @@ app.get('/getChapter/:userId/:mangaName', (req, res) => {
       });
     }
     else {
-      res.set('Content-Type', 'text');
+      res.set('Content-Type', 'text/html; charset=utf-8');
       res.send(manga.name + " chapter " + (manga.currCh.ch +1) + " is not out yet");
     }
   });
